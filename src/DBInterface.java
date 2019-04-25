@@ -79,7 +79,6 @@ class DBInterface {
         return true;
     }
 
-    // bug exists: duplicates can still be added to array field <offerings> for a trip
     public static boolean addOffering(int tripNum, String date, String startTime, String arrivalTime, String driverName, int busID) {
         Document offering = new Document()
             .append("_id", new Document()
@@ -90,7 +89,7 @@ class DBInterface {
             .append("BusID", busID);
         boolean alreadyExists = collectionMap.get("trips").find(
             and(eq("_id", new Document().append("TripNumber", tripNum)),
-                eq("offerings", new Document().append("$elemMatch", offering))
+                elemMatch("offerings", new Document().append("_id", new Document().append("Date", date).append("ScheduledStartTime", startTime)))
             )
         ).first() != null;
         if (alreadyExists) {

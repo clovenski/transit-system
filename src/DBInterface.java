@@ -2,6 +2,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.mongodb.client.model.Filters.*;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.MongoClient;
@@ -13,58 +14,127 @@ class DBInterface {
      * construct methods here that will interact with the mongodb and return necessary outputs
      */
 
-    private MongoDatabase db;
-    private HashMap<String, MongoCollection<Document>> collectionMap;
+    private static MongoDatabase db;
+    private static HashMap<String, MongoCollection<Document>> collectionMap;
 
-    public DBInterface() {
+    static {
         Logger mongoLogger = Logger.getLogger("org.mongodb.driver");
         mongoLogger.setLevel(Level.SEVERE);
-        db = new MongoClient("localhost", 27017).getDatabase("transitsystemdb");
+        db = new MongoClient("localhost", 27017).getDatabase("transitSystem");
         collectionMap = new HashMap<String, MongoCollection<Document>>();
-        collectionMap.put("Trip", db.getCollection("Trip"));
-        collectionMap.put("TripOffering", db.getCollection("TripOffering"));
-        collectionMap.put("Bus", db.getCollection("Bus"));
-        collectionMap.put("Driver", db.getCollection("Driver"));
-        collectionMap.put("Stop", db.getCollection("Stop"));
-        collectionMap.put("ActualTripStopInfo", db.getCollection("ActualTripStopInfo"));
-        collectionMap.put("TripStopInfo", db.getCollection("TripStopInfo"));
+        collectionMap.put("trips", db.getCollection("trips"));
+        collectionMap.put("buses", db.getCollection("buses"));
+        collectionMap.put("drivers", db.getCollection("drivers"));
+        collectionMap.put("stops", db.getCollection("stops"));
+        collectionMap.put("tripStopInfo", db.getCollection("tripStopInfo"));
     }
 
-    public boolean addDriver(String name, String phoneNumber) {
+    public static boolean addDriver(String name, String phoneNumber) {
         Document driver = new Document()
             .append("_id", new Document().append("DriverName", name))
             .append("DriverTelephoneNumber", phoneNumber);
         try {
-            collectionMap.get("Driver").insertOne(driver);
+            collectionMap.get("drivers").insertOne(driver);
         } catch (Exception e) {
             return false;
         }
         return true;
     }
 
-    public boolean addBus(int id, String model, int year) {
+    public static boolean addBus(int id, String model, int year) {
         Document bus = new Document()
             .append("_id", new Document().append("BusID", id))
             .append("Model", model)
             .append("Year", year);
         try {
-            collectionMap.get("Bus").insertOne(bus);
+            collectionMap.get("buses").insertOne(bus);
         } catch (Exception e) {
             return false;
         }
         return true;
     }
 
-    public boolean addTrip(int tripNum, String startLocName, String destinationName) {
+    public static boolean addStop(int stopNum, String address) {
+        Document stop = new Document()
+            .append("_id", new Document().append("StopNumber", stopNum))
+            .append("StopAddress", address);
+        try {
+            collectionMap.get("stops").insertOne(stop);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean addTrip(int tripNum, String startLocName, String destinationName) {
         Document trip = new Document()
             .append("_id", new Document().append("TripNumber", tripNum))
             .append("StartLocationName", startLocName)
             .append("DestinationName", destinationName);
         try {
-            collectionMap.get("Trip").insertOne(trip);
+            collectionMap.get("trips").insertOne(trip);
         } catch (Exception e) {
             return false;
         }
         return true;
+    }
+
+    // bug exists: duplicates can still be added to array field <offerings> for a trip
+    public static boolean addOffering(int tripNum, String date, String startTime, String arrivalTime, String driverName, int busID) {
+        Document offering = new Document()
+            .append("_id", new Document()
+                .append("Date", date)
+                .append("ScheduledStartTime", startTime))
+            .append("ScheduledArrivalTime", arrivalTime)
+            .append("DriverName", driverName)
+            .append("BusID", busID);
+        boolean alreadyExists = collectionMap.get("trips").find(
+            and(eq("_id", new Document().append("TripNumber", tripNum)),
+                eq("offerings", new Document().append("$elemMatch", offering))
+            )
+        ).first() != null;
+        if (alreadyExists) {
+            return false;
+        } else {
+            try {
+                return collectionMap.get("trips").updateOne(
+                    eq("_id", new Document().append("TripNumber", tripNum)),
+                    new Document().append("$addToSet", new Document()
+                        .append("offerings", offering))
+                ).getModifiedCount() > 0;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+    }
+
+    public static boolean tripsExist() {
+        return collectionMap.get("trips").count() > 0;
+    }
+
+    public static boolean driversExist() {
+        return collectionMap.get("drivers").count() > 0;
+    }
+
+    public static boolean busesExist() {
+        return collectionMap.get("buses").count() > 0;
+    }
+
+    public static boolean containsTrip(int tripNum) {
+        return collectionMap.get("trips").count(
+            new Document().append("_id", new Document().append("TripNumber", tripNum))
+        ) > 0;
+    }
+
+    public static boolean containsDriver(String name) {
+        return collectionMap.get("drivers").count(
+            new Document().append("_id", new Document().append("DriverName", name))
+        ) > 0;
+    }
+
+    public static boolean containsBus(int id) {
+        return collectionMap.get("buses").count(
+            new Document().append("_id", new Document().append("BusID", id))
+        ) > 0;
     }
 }

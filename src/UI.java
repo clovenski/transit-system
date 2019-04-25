@@ -96,11 +96,11 @@ class UI {
         }
     }
 
-    public void println() {
-        System.out.println();
+    public void printMsg(String msg) {
+        System.out.println("\n" + msg);
     }
 
-    public void println(String s) {
-        System.out.println(s);
+    public void printError(String err) {
+        System.err.println("\nERROR: " + err);
     }
 }

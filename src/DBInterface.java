@@ -107,6 +107,19 @@ class DBInterface {
         }
     }
 
+    public static boolean addTripStopInfo(int tripNum, int stopNum, int seqNum, int drivingTime) {
+        Document tripStop = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum).append("StopNumber", stopNum))
+            .append("SequenceNumber", seqNum)
+            .append("DrivingTime", drivingTime);
+        try {
+            collectionMap.get("tripStopInfo").insertOne(tripStop);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
     public static boolean tripsExist() {
         return collectionMap.get("trips").count() > 0;
     }
@@ -117,6 +130,10 @@ class DBInterface {
 
     public static boolean busesExist() {
         return collectionMap.get("buses").count() > 0;
+    }
+
+    public static boolean stopsExist() {
+        return collectionMap.get("stops").count() > 0;
     }
 
     public static boolean containsTrip(int tripNum) {
@@ -134,6 +151,12 @@ class DBInterface {
     public static boolean containsBus(int id) {
         return collectionMap.get("buses").count(
             new Document().append("_id", new Document().append("BusID", id))
+        ) > 0;
+    }
+
+    public static boolean containsStop(int stopNum) {
+        return collectionMap.get("stops").count(
+            new Document().append("_id", new Document().append("StopNumber", stopNum))
         ) > 0;
     }
 }

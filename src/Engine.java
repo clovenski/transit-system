@@ -161,6 +161,30 @@ class Engine {
     }
 
     private void addTripStopInfo() {
+        boolean done = false;
+        int tripNum, stopNum, seqNum, drivingTime;
+
+        while (!done) {
+            ui.printMenuHeader("> Main Menu > Add Trip-Stop Info");
+            tripNum = ui.getUserIntInput("Enter the trip number");
+            if (!DBInterface.containsTrip(tripNum)) {
+                ui.printError("Given trip number does not exist");
+                continue;
+            }
+            stopNum = ui.getUserIntInput("Enter the stop number");
+            if (!DBInterface.containsStop(stopNum)) {
+                ui.printError("Given stop number does not exist");
+                continue;
+            }
+            seqNum = ui.getUserIntInput("Enter the sequence number");
+            drivingTime = ui.getUserIntInput("Enter the driving time in minutes");
+            if (DBInterface.addTripStopInfo(tripNum, stopNum, seqNum, drivingTime)) {
+                ui.printMsg("Successfully added trip-stop info");
+            } else {
+                ui.printError("Could not add trip-stop, may already exist");
+            }
+            done = true;
+        }
     }
 
     private void deleteDriver() {

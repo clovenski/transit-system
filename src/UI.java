@@ -15,9 +15,11 @@ class UI {
         System.out.println("Transit System");
     }
 
-    public void printMenu(String menuName, ArrayList<String> options) {
-        System.out.println();
-        System.out.println("> " + menuName);
+    public void printMenuHeader(String header) {
+        System.out.println("\n" + header);
+    }
+
+    public void printMenu(ArrayList<String> options) {
         for (int i = 1; i <= options.size(); i++) {
             System.out.printf("%2d. %s\n", i, options.get(i - 1));
         }
@@ -52,7 +54,7 @@ class UI {
         return userInput - 1;
     }
 
-    public String getUserInput(String prompt) {
+    public String getUserStringInput(String prompt) {
         String input;
 
         while (true) {
@@ -66,6 +68,28 @@ class UI {
                 }
             } catch (NoSuchElementException nsee) {
                 System.err.println("Please enter an input");
+            } catch (Exception e) {
+                System.err.println("Invalid input");
+            }
+        }
+    }
+
+    public int getUserIntInput(String prompt) {
+        String input;
+
+        while (true) {
+            System.out.print(prompt + ": ");
+            try {
+                input = keyboard.nextLine();
+                if (input.equals("")) {
+                    throw new NoSuchElementException();
+                } else {
+                    return Integer.parseInt(input);
+                }
+            } catch (NoSuchElementException nsee) {
+                System.err.println("Please enter an input");
+            } catch (NumberFormatException nfe) {
+                System.err.println("Please enter an integer");
             } catch (Exception e) {
                 System.err.println("Invalid input");
             }

@@ -29,13 +29,39 @@ class DBInterface {
         collectionMap.put("ActualTripStopInfo", db.getCollection("ActualTripStopInfo"));
         collectionMap.put("TripStopInfo", db.getCollection("TripStopInfo"));
     }
-    
+
     public boolean addDriver(String name, String phoneNumber) {
         Document driver = new Document()
-            .append("_id", new Document().append("name", name))
-            .append("phoneNumber", phoneNumber);
+            .append("_id", new Document().append("DriverName", name))
+            .append("DriverTelephoneNumber", phoneNumber);
         try {
             collectionMap.get("Driver").insertOne(driver);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean addBus(int id, String model, int year) {
+        Document bus = new Document()
+            .append("_id", new Document().append("BusID", id))
+            .append("Model", model)
+            .append("Year", year);
+        try {
+            collectionMap.get("Bus").insertOne(bus);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean addTrip(int tripNum, String startLocName, String destinationName) {
+        Document trip = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum))
+            .append("StartLocationName", startLocName)
+            .append("DestinationName", destinationName);
+        try {
+            collectionMap.get("Trip").insertOne(trip);
         } catch (Exception e) {
             return false;
         }

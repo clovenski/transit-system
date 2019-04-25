@@ -31,7 +31,8 @@ class Engine {
 
         ui.printStartMsg();
         while (!done) {
-            ui.printMenu("Main Menu", mainMenuOpts);
+            ui.printMenuHeader("> Main Menu");
+            ui.printMenu(mainMenuOpts);
             switch (ui.getUserMenuChoice(mainMenuOpts.size())) {
             case 0:
                 displayTripSchedule();
@@ -87,8 +88,11 @@ class Engine {
     }
 
     private void addDriver() {
-        String name = ui.getUserInput("Enter the driver's name");
-        String phoneNumber = ui.getUserInput("Enter the phone number");
+        String name, phoneNumber;
+
+        ui.printMenuHeader("> Main Menu > Add Driver");
+        name = ui.getUserStringInput("Enter the driver's name");
+        phoneNumber = ui.getUserStringInput("Enter the phone number");
         ui.println();
         if (dbInterface.addDriver(name, phoneNumber)) {
             ui.println("Driver successfully added");
@@ -98,9 +102,35 @@ class Engine {
     }
 
     private void addBus() {
+        int id, year;
+        String model;
+
+        ui.printMenuHeader("> Main Menu > Add Bus");
+        id = ui.getUserIntInput("Enter the bus ID");
+        model = ui.getUserStringInput("Enter the bus model");
+        year = ui.getUserIntInput("Enter its year");
+        ui.println();
+        if (dbInterface.addBus(id, model, year)) {
+            ui.println("Bus successfully added");
+        } else {
+            ui.println("Could not add bus, may already exist");
+        }
     }
 
     private void addTrip() {
+        int tripNum;
+        String startLocName, destinationName;
+
+        ui.printMenuHeader("> Main Menu > Add Trip");
+        tripNum = ui.getUserIntInput("Enter the trip number");
+        startLocName = ui.getUserStringInput("Enter the start location name");
+        destinationName = ui.getUserStringInput("Enter the destination name");
+        ui.println();
+        if (dbInterface.addTrip(tripNum, startLocName, destinationName)) {
+            ui.println("Trip successfully added");
+        } else {
+            ui.println("Could not add trip, may already exist");
+        }
     }
 
     private void addTripInfo() {

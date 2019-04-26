@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 class Engine {
     private ScheduleEditor scheduleEditor;
@@ -88,9 +90,37 @@ class Engine {
     }
 
     private void displayTripSchedule() {
-        // dummy code
-        for (String row : DBInterface.getSchedule("test", "testing", "april 24, 2019")) {
-            System.out.println(row);
+        String date, startLoc, destination;
+        List<String> schedule;
+        StringTokenizer tokenizer;
+        String border = "";
+
+        ui.printMenuHeader("> Main Menu > Display Schedule");
+        date = ui.getUserStringInput("Enter the date of the trip");
+        startLoc = ui.getUserStringInput("Enter the starting location");
+        destination = ui.getUserStringInput("Enter the destination");
+        schedule = DBInterface.getSchedule(startLoc, destination, date);
+        if (schedule.size() > 0) {
+            ui.println(String.format("%-20s | %-20s | %-20s | %-10s | %-12s | %-20s | %-6s", 
+                                     "Date", "Start Location", "Destination", "Start Time",
+                                     "Arrival Time", "Driver Name", "Bus ID"));
+            for (int i = 0; i < 126; i++) {
+                border += "-";
+            }
+            ui.println(border);
+            for (String row : schedule) {
+                tokenizer = new StringTokenizer(row, "\t");
+                ui.println(String.format("%-20s | %-20s | %-20s | %10s | %12s | %-20s | %6s",
+                                         tokenizer.nextToken(),     // date
+                                         tokenizer.nextToken(),     // start loc
+                                         tokenizer.nextToken(),     // destination
+                                         tokenizer.nextToken(),     // start time
+                                         tokenizer.nextToken(),     // arrival time
+                                         tokenizer.nextToken(),     // driver name
+                                         tokenizer.nextToken()));   // bus id
+            }
+        } else {
+            ui.printMsg("Empty schedule");
         }
     }
 

@@ -158,6 +158,11 @@ class Engine {
     }
 
     private void addTripInfo() {
+        // print menu header: > Main Menu > Add Trip Info
+        // print a warning that any existing info will be overwritten
+        // prompt user for input for all the needed attributes
+        // call DBInterface.addFullTripInfo(...) with the necessary args
+        // output success or failure depending on returned value
     }
 
     private void addTripStopInfo() {

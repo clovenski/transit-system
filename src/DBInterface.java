@@ -29,6 +29,8 @@ class DBInterface {
         collectionMap.put("tripStopInfo", db.getCollection("tripStopInfo"));
     }
 
+    // implement display functions here; returns a List of Strings that represent the info to print
+
     public static boolean addDriver(String name, String phoneNumber) {
         Document driver = new Document()
             .append("_id", new Document().append("DriverName", name))
@@ -107,6 +109,20 @@ class DBInterface {
         }
     }
 
+    public static boolean addFullTripInfo(int tripNum,
+                                          String date,
+                                          String startTime,
+                                          int stopNum,
+                                          String arrivalTime,
+                                          String realStartTime,
+                                          String realArrivalTime,
+                                          int numPassengersIn,
+                                          int numPassengersOut) {
+        // return true if trip info was updated properly OR added if doesn't exist
+        // false otherwise
+        return true; // dummy code
+    }
+
     public static boolean addTripStopInfo(int tripNum, int stopNum, int seqNum, int drivingTime) {
         Document tripStop = new Document()
             .append("_id", new Document().append("TripNumber", tripNum).append("StopNumber", stopNum))
@@ -118,6 +134,54 @@ class DBInterface {
             return false;
         }
         return true;
+    }
+
+    public static boolean deleteDriver(String name) {
+        // delete driver from db according to given driver name
+        // also need to set the field in any offerings in any trip that contains
+        // this driver; ie. set that field to NULL
+        return true; // dummy code
+    }
+
+    public static boolean deleteBus(int id) {
+        // delete bus from db according to given bus ID
+        // also need to set the field in any offerings in any trip that contains
+        // this bus; ie. set that field to NULL
+        return true; // dummy code
+    }
+
+    public static boolean deleteStop(int stopNum) {
+        // delete stop from db according to given stop number
+        // CASCADE this delete operation onto the stop info field in any
+        // offerings in any trip that contains this stop, also CASCADE
+        // the delete onto any trip-stop info that contains this stop
+        return true; // dummy code
+    }
+
+    public static boolean deleteTrip(int tripNum) {
+        // delete trip from db according to given trip number
+        // also CASCADE this delete operation to any trip-stop info that contains
+        // this trip
+        return true; // dummy code
+    }
+
+    public static boolean deleteOffering(int tripNum, String date, String startTime) {
+        // delete offering from db with the specified trip number, date and start time
+        // note that trip offerings are nested into a field of the trips,
+        // so delete the appropriate offering from their "offerings" field
+        return true; // dummy code
+    }
+
+    public static boolean updateDriver(int tripNum, String date, String startTime, String newDriverName) {
+        // update the appropriate offering's "DriverName" field to newDriverName
+        // return true if successfully updated, false otherwise
+        return true; // dummy code
+    }
+
+    public static boolean updateBus(int tripNum, String date, String startTime, int newBusID) {
+        // update the appropriate offering's "BusID" field to newBusID
+        // return true if successfully updated, false otherwise
+        return true; // dummy code
     }
 
     public static boolean tripsExist() {

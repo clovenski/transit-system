@@ -1,12 +1,17 @@
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.mongodb.client.model.Filters.*;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.MongoClient;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 class DBInterface {
     /*
@@ -29,7 +34,58 @@ class DBInterface {
         collectionMap.put("tripStopInfo", db.getCollection("tripStopInfo"));
     }
 
-    // implement display functions here; returns a List of Strings that represent the info to print
+    @SuppressWarnings("unchecked")
+    public static List<String> getSchedule(String startLocName, String destName, String date) {
+        ArrayList<String> schedule, condition;
+        ArrayList<Bson> pipeline;
+        ArrayList<Document> offerings;
+        Bson stage1, stage2;
+        AggregateIterable<Document> results;
+        MongoCursor<Document> it;
+        Document currentResult;
+        String row;
+
+        schedule = new ArrayList<String>();
+        pipeline = new ArrayList<Bson>();
+        condition = new ArrayList<String>();
+        condition.add("$$offering._id.Date");
+        condition.add(date);
+        stage1 = new Document()
+            .append("$match", new Document()
+                .append("StartLocationName", startLocName)
+                .append("DestinationName", destName)
+                .append("offerings._id.Date", date)
+            );
+        stage2 = new Document()
+            .append("$addFields", new Document()
+                .append("offerings", new Document()
+                    .append("$filter", new Document()
+                        .append("input", "$offerings")
+                        .append("as", "offering")
+                        .append("cond", new Document()
+                            .append("$eq", condition)
+                        )
+                    )
+                )
+            );
+        pipeline.add(stage1);
+        pipeline.add(stage2);
+        results = collectionMap.get("trips").aggregate(pipeline);
+        it = results.iterator();
+        while (it.hasNext()) {
+            currentResult = it.next();
+            offerings = (ArrayList<Document>) currentResult.get("offerings");
+            for (Document offering : offerings) {
+                row = date + "\t" + startLocName + "\t" + destName + "\t";
+                row += ((Document)offering.get("_id")).getString("ScheduledStartTime") + "\t";
+                row += offering.getString("ScheduledArrivalTime") + "\t";
+                row += offering.getString("DriverName") + "\t";
+                row += offering.getInteger("BusID").toString();
+                schedule.add(row);
+            }
+        }
+        return schedule;
+    }
 
     public static boolean addDriver(String name, String phoneNumber) {
         Document driver = new Document()
@@ -202,25 +258,25 @@ class DBInterface {
 
     public static boolean containsTrip(int tripNum) {
         return collectionMap.get("trips").count(
-            new Document().append("_id", new Document().append("TripNumber", tripNum))
+            eq("_id.TripNumber", tripNum)
         ) > 0;
     }
 
     public static boolean containsDriver(String name) {
         return collectionMap.get("drivers").count(
-            new Document().append("_id", new Document().append("DriverName", name))
+            eq("_id.DriverName", name)
         ) > 0;
     }
 
     public static boolean containsBus(int id) {
         return collectionMap.get("buses").count(
-            new Document().append("_id", new Document().append("BusID", id))
+            eq("_id.BusID", id)
         ) > 0;
     }
 
     public static boolean containsStop(int stopNum) {
         return collectionMap.get("stops").count(
-            new Document().append("_id", new Document().append("StopNumber", stopNum))
+            eq("_id.StopNumber", stopNum)
         ) > 0;
     }
 }

@@ -88,6 +88,10 @@ class Engine {
     }
 
     private void displayTripSchedule() {
+        // dummy code
+        for (String row : DBInterface.getSchedule("test", "testing", "april 24, 2019")) {
+            System.out.println(row);
+        }
     }
 
     private void editSchedule() {

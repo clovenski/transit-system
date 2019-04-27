@@ -96,6 +96,10 @@ class UI {
         }
     }
 
+    public void println(String s) {
+        System.out.println(s);
+    }
+
     public void printMsg(String msg) {
         System.out.println("\n" + msg);
     }

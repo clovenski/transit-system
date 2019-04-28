@@ -198,6 +198,27 @@ class Engine {
         // prompt user for input for all the needed attributes
         // call DBInterface.addFullTripInfo(...) with the necessary args
         // output success or failure depending on returned value
+        int tripNum;
+        String date;
+        String startTime;
+        int stopNum;
+        String arrivalTime;
+        String realStartTime;
+        String realArrivalTime;
+        int numPassengersIn;
+        int numPassengersOut;
+        ui.printMenuHeader("> Main Menu > Add Trip Info");
+        tripNum = ui.getUserIntInput("Enter the trip number");
+        date = ui.getUserStringInput("Enter the trip date");
+        startTime = ui.getUserStringInput("Enter the trip start time");
+        stopNum = ui.getUserIntInput("Enter the number of stops on the trip");
+        arrivalTime = ui.getUserStringInput("Enter the arrival time of the trip");
+        realStartTime = ui.getUserStringInput("Enter the real start time of the trip");
+        realArrivalTime = ui.getUserStringInput("Enter the real arrival time of the trip");
+        numPassengersIn = ui.getUserIntInput("Enter the total no. of passengers in");
+        numPassengersOut = ui.getUserIntInput("Enter the total no. of passengers out");
+        
+      
     }
 
     private void addTripStopInfo() {
@@ -228,14 +249,53 @@ class Engine {
     }
 
     private void deleteDriver() {
+    
+   	 	String name;
+       	ui.printMenuHeader("> Main Menu > Delete Driver");
+        name = ui.getUserStringInput("Enter the driver's name");
+        if (DBInterface.deleteDriver(name)) {
+            ui.printMsg("Driver successfully deleted");
+        } else {
+            ui.printError("Could not delete driver, may have already deleted.");
+        }
     }
 
     private void deleteBus() {
+    
+    	int id;
+        ui.printMenuHeader("> Main Menu > Delete Bus");
+        id = ui.getUserIntInput("Enter the bus ID");
+        if (DBInterface.deleteBus(id)) {
+            ui.printMsg("Bus successfully deleted.");
+        } else {
+            ui.printError("Could not delete bus, may have already deleted.");
+        }
     }
 
     private void deleteStop() {
+    	
+    	int stopNum;
+        ui.printMenuHeader("> Main Menu > Delete Stop");
+        stopNum = ui.getUserIntInput("Enter the stop number");
+        if (DBInterface.deleteStop(stopNum)) {
+            ui.printMsg("Stop successfully deleted");
+        } else {
+            ui.printError("Could not delete stop, may have already deleted.");
+        }
+    	
     }
 
     private void deleteTrip() {
+    	
+    	int tripNum;
+        ui.printMenuHeader("> Main Menu > Delete Trip");
+        tripNum = ui.getUserIntInput("Enter the trip number");
+
+        if (DBInterface.deleteTrip(tripNum)) {
+            ui.printMsg("Trip successfully deleted.");
+        } else {
+            ui.printError("Could not delete trip, may have already deleted.");
+        }
+    	
     }
 }

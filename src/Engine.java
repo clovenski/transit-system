@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 class Engine {
     private ScheduleEditor scheduleEditor;
@@ -87,10 +89,39 @@ class Engine {
         scanner.close();
     }
 
+    //Testing
     private void displayTripSchedule() {
-        // dummy code
-        for (String row : DBInterface.getSchedule("test", "testing", "april 24, 2019")) {
-            System.out.println(row);
+        String date, startLoc, destination;
+        List<String> schedule;
+        StringTokenizer tokenizer;
+        String border = "";
+
+        ui.printMenuHeader("> Main Menu > Display Schedule");
+        date = ui.getUserStringInput("Enter the date of the trip");
+        startLoc = ui.getUserStringInput("Enter the starting location");
+        destination = ui.getUserStringInput("Enter the destination");
+        schedule = DBInterface.getSchedule(startLoc, destination, date);
+        if (schedule.size() > 0) {
+            ui.println(String.format("%-20s | %-20s | %-20s | %-10s | %-12s | %-20s | %-6s", 
+                                     "Date", "Start Location", "Destination", "Start Time",
+                                     "Arrival Time", "Driver Name", "Bus ID"));
+            for (int i = 0; i < 126; i++) {
+                border += "-";
+            }
+            ui.println(border);
+            for (String row : schedule) {
+                tokenizer = new StringTokenizer(row, "\t");
+                ui.println(String.format("%-20s | %-20s | %-20s | %10s | %12s | %-20s | %6s",
+                                         tokenizer.nextToken(),     // date
+                                         tokenizer.nextToken(),     // start loc
+                                         tokenizer.nextToken(),     // destination
+                                         tokenizer.nextToken(),     // start time
+                                         tokenizer.nextToken(),     // arrival time
+                                         tokenizer.nextToken(),     // driver name
+                                         tokenizer.nextToken()));   // bus id
+            }
+        } else {
+            ui.printMsg("Empty schedule");
         }
     }
 
@@ -167,6 +198,27 @@ class Engine {
         // prompt user for input for all the needed attributes
         // call DBInterface.addFullTripInfo(...) with the necessary args
         // output success or failure depending on returned value
+        int tripNum;
+        String date;
+        String startTime;
+        int stopNum;
+        String arrivalTime;
+        String realStartTime;
+        String realArrivalTime;
+        int numPassengersIn;
+        int numPassengersOut;
+        ui.printMenuHeader("> Main Menu > Add Trip Info");
+        tripNum = ui.getUserIntInput("Enter the trip number");
+        date = ui.getUserStringInput("Enter the trip date");
+        startTime = ui.getUserStringInput("Enter the trip start time");
+        stopNum = ui.getUserIntInput("Enter the number of stops on the trip");
+        arrivalTime = ui.getUserStringInput("Enter the arrival time of the trip");
+        realStartTime = ui.getUserStringInput("Enter the real start time of the trip");
+        realArrivalTime = ui.getUserStringInput("Enter the real arrival time of the trip");
+        numPassengersIn = ui.getUserIntInput("Enter the total no. of passengers in");
+        numPassengersOut = ui.getUserIntInput("Enter the total no. of passengers out");
+        
+      
     }
 
     private void addTripStopInfo() {
@@ -197,14 +249,53 @@ class Engine {
     }
 
     private void deleteDriver() {
+    
+   	 	String name;
+       	ui.printMenuHeader("> Main Menu > Delete Driver");
+        name = ui.getUserStringInput("Enter the driver's name");
+        if (DBInterface.deleteDriver(name)) {
+            ui.printMsg("Driver successfully deleted");
+        } else {
+            ui.printError("Could not delete driver, may have already deleted.");
+        }
     }
 
     private void deleteBus() {
+    
+    	int id;
+        ui.printMenuHeader("> Main Menu > Delete Bus");
+        id = ui.getUserIntInput("Enter the bus ID");
+        if (DBInterface.deleteBus(id)) {
+            ui.printMsg("Bus successfully deleted.");
+        } else {
+            ui.printError("Could not delete bus, may have already deleted.");
+        }
     }
 
     private void deleteStop() {
+    	
+    	int stopNum;
+        ui.printMenuHeader("> Main Menu > Delete Stop");
+        stopNum = ui.getUserIntInput("Enter the stop number");
+        if (DBInterface.deleteStop(stopNum)) {
+            ui.printMsg("Stop successfully deleted");
+        } else {
+            ui.printError("Could not delete stop, may have already deleted.");
+        }
+    	
     }
 
     private void deleteTrip() {
+    	
+    	int tripNum;
+        ui.printMenuHeader("> Main Menu > Delete Trip");
+        tripNum = ui.getUserIntInput("Enter the trip number");
+
+        if (DBInterface.deleteTrip(tripNum)) {
+            ui.printMsg("Trip successfully deleted.");
+        } else {
+            ui.printError("Could not delete trip, may have already deleted.");
+        }
+    	
     }
 }

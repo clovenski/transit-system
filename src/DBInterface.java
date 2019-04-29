@@ -176,6 +176,20 @@ class DBInterface {
                                           int numPassengersOut) {
         // return true if trip info was updated properly OR added if doesn't exist
         // false otherwise
+        
+        Document tripInfo = new Document()
+        	.append("_id", new Document()
+                .append("TripNumber", tripNum)
+                .append("Date", date))
+                .append("ScheduledStartTime", startTime)
+           		.append("StopNumber", stopNum)
+            	.append("ScheduledArrivalTime", arrivalTime)
+            	.append("ActualStartTime", realStartTime)
+            	.append("ActualArrivalTime", realArrivalTime)
+            	.append("NumberOfPassengerIn", numPassengersIn)
+            	.append("NumberOfPassengerOut", numPassengersOut);
+            	
+            	
         return true; // dummy code
     }
 
@@ -195,7 +209,31 @@ class DBInterface {
     public static boolean deleteDriver(String name) {
         // delete driver from db according to given driver name
         // also need to set the field in any offerings in any trip that contains
-        // this driver; ie. set that field to NULL
+        // this driver; ie. set that field to NULL 
+        
+        Document driver = new Document()
+        	.append("_id", new Document().append("DriverName", name));
+        
+        try{
+        	collectionMap.get("drivers").deleteOne(driver);
+        }catch (Exception e){
+        	return false;
+        }
+        
+        /**
+        boolean driverFound = collectionMap.get("trips").find(
+            and(eq("_id"), elemMatch("offerings", new Document().append("_id", new Document().append("DriverName", name)))));
+            
+            if(driverFound){
+            	try{
+            		collectionMap.get("trips").updateOne(eq("_id", new Document().append("$addToSet", new Document().append("DriverName", null))));
+            		}
+                catch(Exception e){
+                
+            }
+        }
+        **/
+            	
         return true; // dummy code
     }
 
@@ -203,6 +241,16 @@ class DBInterface {
         // delete bus from db according to given bus ID
         // also need to set the field in any offerings in any trip that contains
         // this bus; ie. set that field to NULL
+        
+         Document bus = new Document()
+        	.append("_id", new Document().append("BusID", id));
+        
+        try{
+        	collectionMap.get("buses").deleteOne(bus);
+        }catch (Exception e){
+        	return false;
+        }
+        
         return true; // dummy code
     }
 
@@ -211,6 +259,14 @@ class DBInterface {
         // CASCADE this delete operation onto the stop info field in any
         // offerings in any trip that contains this stop, also CASCADE
         // the delete onto any trip-stop info that contains this stop
+        Document stop = new Document()
+        	.append("_id", new Document().append("StopNumber", stopNum));
+        
+        try{
+        	collectionMap.get("stops").deleteOne(stop);
+        }catch (Exception e){
+        	return false;
+        }
         return true; // dummy code
     }
 
@@ -218,6 +274,15 @@ class DBInterface {
         // delete trip from db according to given trip number
         // also CASCADE this delete operation to any trip-stop info that contains
         // this trip
+        Document trip = new Document()
+        	.append("_id", new Document().append("TripNumber", tripNum));
+        
+        try{
+        	collectionMap.get("trips").deleteOne(trip);
+        }catch (Exception e){
+        	return false;
+        }
+        
         return true; // dummy code
     }
 
@@ -225,6 +290,18 @@ class DBInterface {
         // delete offering from db with the specified trip number, date and start time
         // note that trip offerings are nested into a field of the trips,
         // so delete the appropriate offering from their "offerings" field
+        Document offering = new Document()
+            .append("_id", new Document()
+            	.append("TripNumber", tripNum)
+                .append("Date", date)
+                .append("ScheduledStartTime", startTime));
+        
+        try{
+        	collectionMap.get("trips").deleteOne(offering);
+        }catch (Exception e){
+        	return false;
+        }
+        
         return true; // dummy code
     }
 

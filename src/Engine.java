@@ -89,7 +89,6 @@ class Engine {
         scanner.close();
     }
 
-    //Testing
     private void displayTripSchedule() {
         String date, startLoc, destination;
         List<String> schedule;

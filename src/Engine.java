@@ -101,6 +101,7 @@ class Engine {
         destination = ui.getUserStringInput("Enter the destination");
         schedule = DBInterface.getSchedule(startLoc, destination, date);
         if (schedule.size() > 0) {
+            ui.println("");
             ui.println(String.format("%-20s | %-20s | %-20s | %-10s | %-12s | %-20s | %-6s", 
                                      "Date", "Start Location", "Destination", "Start Time",
                                      "Arrival Time", "Driver Name", "Bus ID"));
@@ -129,9 +130,65 @@ class Engine {
     }
 
     private void displayStops() {
+        int tripNum;
+        List<String> tripInfo;
+        String border = "";
+        StringTokenizer tokenizer;
+
+        ui.printMenuHeader("> Main Menu > Display Stops");
+        tripNum = ui.getUserIntInput("Enter the trip number");
+        tripInfo = DBInterface.getTripInfo(tripNum);
+        if (tripInfo.size() > 0) {
+            ui.println("");
+            ui.println(String.format("%-11s | %-15s | %-12s", "Stop Number", "Sequence Number", "Driving Time"));
+            for (int i = 0; i < 44; i++) {
+                border += "-";
+            }
+            ui.println(border);
+            for (String row : tripInfo) {
+                tokenizer = new StringTokenizer(row, "\t");
+                ui.println(String.format("%11s | %15s | %12s",
+                                         tokenizer.nextToken(),     // stop number
+                                         tokenizer.nextToken(),     // seq number
+                                         tokenizer.nextToken()));   // driving time
+            }
+        } else {
+            ui.printMsg("Empty trip info");
+        }
     }
 
     private void displayDriverSchedule() {
+        String driverName, date;
+        List<String> schedule;
+        String border = "";
+        StringTokenizer tokenizer;
+
+        ui.printMenuHeader("> Main Menu > Display Driver Schedule");
+        driverName = ui.getUserStringInput("Enter the driver's name");
+        date = ui.getUserStringInput("Enter the date");
+        schedule = DBInterface.getDriverSchedule(driverName, date);
+        if (schedule.size() > 0) {
+            ui.println("");
+            ui.println(String.format("%-11s | %-14s | %-11s | %-10s | %-12s | %-6s",
+                                     "Trip Number", "Start Location", "Destination",
+                                     "Start Time", "Arrival Time", "Bus ID"));
+            for (int i = 0; i < 79; i++) {
+                border += "-";
+            }
+            ui.println(border);
+            for (String row : schedule) {
+                tokenizer = new StringTokenizer(row, "\t");
+                ui.println(String.format("%11s | %-14s | %-11s | %10s | %12s | %6s",
+                                         tokenizer.nextToken(),     // trip number
+                                         tokenizer.nextToken(),     // start location
+                                         tokenizer.nextToken(),     // destination
+                                         tokenizer.nextToken(),     // start time
+                                         tokenizer.nextToken(),     // arrival time
+                                         tokenizer.nextToken()));   // bus ID
+            }
+        } else {
+            ui.printMsg("Empty schedule");
+        }
     }
 
     private void addDriver() {

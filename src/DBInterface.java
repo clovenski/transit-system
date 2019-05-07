@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 
 import static com.mongodb.client.model.Filters.*;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
@@ -80,6 +81,88 @@ class DBInterface {
                 row += ((Document)offering.get("_id")).getString("ScheduledStartTime") + "\t";
                 row += offering.getString("ScheduledArrivalTime") + "\t";
                 row += offering.getString("DriverName") + "\t";
+                row += offering.getInteger("BusID").toString();
+                schedule.add(row);
+            }
+        }
+        return schedule;
+    }
+
+    public static List<String> getTripInfo(int tripNum) {
+        ArrayList<String> tripInfo = new ArrayList<String>();
+        FindIterable<Document> results;
+        MongoCursor<Document> it;
+        Document currentResult;
+        Document trip;
+        String row;
+
+        trip = new Document()
+            .append("_id.TripNumber", tripNum);
+        results = collectionMap.get("tripStopInfo").find(trip);
+        it = results.iterator();
+        while (it.hasNext()) {
+            currentResult = it.next();
+            row = ((Document)currentResult.get("_id")).getInteger("StopNumber").toString() + "\t";
+            row += currentResult.getInteger("SequenceNumber").toString() + "\t";
+            row += currentResult.getInteger("DrivingTime").toString();
+            tripInfo.add(row);
+        }
+        return tripInfo;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<String> getDriverSchedule(String driverName, String date) {
+        ArrayList<String> schedule, condition1, condition2;
+        ArrayList<Bson> pipeline, conditions;
+        ArrayList<Document> offerings;
+        Bson stage1, stage2;
+        AggregateIterable<Document> results;
+        MongoCursor<Document> it;
+        Document currentResult;
+        String row, tripNumStr, startLocStr, destinationStr;
+
+        schedule = new ArrayList<String>();
+        pipeline = new ArrayList<Bson>();
+        conditions = new ArrayList<Bson>();
+        condition1 = new ArrayList<String>();
+        condition2 = new ArrayList<String>();
+        condition1.add("$$offering._id.Date");
+        condition1.add(date);
+        condition2.add("$$offering.DriverName");
+        condition2.add(driverName);
+        conditions.add(new Document().append("$eq", condition1));
+        conditions.add(new Document().append("$eq", condition2));
+        stage1 = new Document()
+            .append("$match", new Document()
+                .append("offerings.DriverName", driverName)
+                .append("offerings._id.Date", date)
+            );
+        stage2 = new Document()
+            .append("$addFields", new Document()
+                .append("offerings", new Document()
+                    .append("$filter", new Document()
+                        .append("input", "$offerings")
+                        .append("as", "offering")
+                        .append("cond", new Document()
+                            .append("$and", conditions)
+                        )
+                    )
+                )
+            );
+        pipeline.add(stage1);
+        pipeline.add(stage2);
+        results = collectionMap.get("trips").aggregate(pipeline);
+        it = results.iterator();
+        while (it.hasNext()) {
+            currentResult = it.next();
+            tripNumStr = ((Document)currentResult.get("_id")).getInteger("TripNumber").toString();
+            startLocStr = currentResult.getString("StartLocationName");
+            destinationStr = currentResult.getString("DestinationName");
+            offerings = (ArrayList<Document>) currentResult.get("offerings");
+            for (Document offering : offerings) {
+                row = tripNumStr + "\t" + startLocStr + "\t" + destinationStr + "\t";
+                row += ((Document)offering.get("_id")).getString("ScheduledStartTime") + "\t";
+                row += offering.getString("ScheduledArrivalTime") + "\t";
                 row += offering.getInteger("BusID").toString();
                 schedule.add(row);
             }
@@ -181,13 +264,13 @@ class DBInterface {
         	.append("_id", new Document()
                 .append("TripNumber", tripNum)
                 .append("Date", date))
-                .append("ScheduledStartTime", startTime)
-           		.append("StopNumber", stopNum)
-            	.append("ScheduledArrivalTime", arrivalTime)
-            	.append("ActualStartTime", realStartTime)
-            	.append("ActualArrivalTime", realArrivalTime)
-            	.append("NumberOfPassengerIn", numPassengersIn)
-            	.append("NumberOfPassengerOut", numPassengersOut);
+            .append("ScheduledStartTime", startTime)
+            .append("StopNumber", stopNum)
+            .append("ScheduledArrivalTime", arrivalTime)
+            .append("ActualStartTime", realStartTime)
+            .append("ActualArrivalTime", realArrivalTime)
+            .append("NumberOfPassengerIn", numPassengersIn)
+            .append("NumberOfPassengerOut", numPassengersOut);
             	
             	
         return true; // dummy code

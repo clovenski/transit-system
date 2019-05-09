@@ -230,8 +230,10 @@ class DBInterface {
             .append("BusID", busID);
         boolean alreadyExists = collectionMap.get("trips").find(
             and(eq("_id", new Document().append("TripNumber", tripNum)),
-                elemMatch("offerings", new Document().append("_id", new Document().append("Date", date).append("ScheduledStartTime", startTime)))
-            )
+                elemMatch("offerings", new Document()
+                    .append("_id", new Document()
+                        .append("Date", date)
+                        .append("ScheduledStartTime", startTime))))
         ).first() != null;
         if (alreadyExists) {
             return false;
@@ -391,13 +393,43 @@ class DBInterface {
     public static boolean updateDriver(int tripNum, String date, String startTime, String newDriverName) {
         // update the appropriate offering's "DriverName" field to newDriverName
         // return true if successfully updated, false otherwise
-        return true; // dummy code
+        Document query = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum))
+            .append("offerings", new Document()
+                .append("$elemMatch", new Document()
+                    .append("_id", new Document()
+                        .append("Date", date)
+                        .append("ScheduledStartTime", startTime))));
+        Document update = new Document()
+            .append("$set", new Document()
+                .append("offerings.$.DriverName", newDriverName));
+        try {
+            collectionMap.get("trips").updateOne(query, update);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean updateBus(int tripNum, String date, String startTime, int newBusID) {
         // update the appropriate offering's "BusID" field to newBusID
         // return true if successfully updated, false otherwise
-        return true; // dummy code
+        Document query = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum))
+            .append("offerings", new Document()
+                .append("$elemMatch", new Document()
+                    .append("_id", new Document()
+                        .append("Date", date)
+                        .append("ScheduledStartTime", startTime))));
+        Document update = new Document()
+            .append("$set", new Document()
+                .append("offerings.$.BusID", newBusID));
+        try {
+            collectionMap.get("trips").updateOne(query, update);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean tripsExist() {
@@ -438,5 +470,13 @@ class DBInterface {
         return collectionMap.get("stops").count(
             eq("_id.StopNumber", stopNum)
         ) > 0;
+    }
+
+    public static long countDrivers() {
+        return collectionMap.get("drivers").count();
+    }
+
+    public static long countBuses() {
+        return collectionMap.get("buses").count();
     }
 }

@@ -96,8 +96,86 @@ class ScheduleEditor {
     }
 
     private void changeDriver() {
+        if (!DBInterface.tripsExist()) {
+            ui.printError("No trips exist, cannot possibly update an offering");
+            return;
+        } else if (!DBInterface.driversExist()) {
+            ui.printError("No drivers exist, cannot possibly update an offering");
+            return;
+        } else  if (!DBInterface.busesExist()) {
+            ui.printError("No buses exist, cannot possibly update an offering");
+            return;
+        } else if (DBInterface.countDrivers() < 2) {
+            ui.printError("Only one driver exists, cannot possibly update the driver");
+            return;
+        }
+
+        boolean done = false;
+        int tripNum;
+        String date, startTime, newDriverName;
+
+        while (!done) {
+            ui.printMenuHeader("> Main Menu > Edit Schedule > Change Driver");
+            tripNum = ui.getUserIntInput("Enter the trip number");
+            if (!DBInterface.containsTrip(tripNum)) {
+                ui.printError("Given trip number does not exist");
+                continue;
+            }
+            date = ui.getUserStringInput("Enter the offering date");
+            startTime = ui.getUserStringInput("Enter the scheduled start time");
+            newDriverName = ui.getUserStringInput("Enter the name of the new driver");
+            if (!DBInterface.containsDriver(newDriverName)) {
+                ui.printError("Given driver name does not exist");
+                continue;
+            }
+            if (DBInterface.updateDriver(tripNum, date, startTime, newDriverName)) {
+                ui.printMsg("Successfully updated driver");
+            } else {
+                ui.printError("Could not update driver, offering may not exist");
+            }
+            done = true;
+        }
     }
 
     private void changeBus() {
+        if (!DBInterface.tripsExist()) {
+            ui.printError("No trips exist, cannot possibly update an offering");
+            return;
+        } else if (!DBInterface.driversExist()) {
+            ui.printError("No drivers exist, cannot possibly update an offering");
+            return;
+        } else  if (!DBInterface.busesExist()) {
+            ui.printError("No buses exist, cannot possibly update an offering");
+            return;
+        } else if (DBInterface.countBuses() < 2) {
+            ui.printError("Only one bus exists, cannot possibly update the bus");
+            return;
+        }
+
+        boolean done = false;
+        int tripNum, newBusID;
+        String date, startTime;
+
+        while (!done) {
+            ui.printMenuHeader("> Main Menu > Edit Schedule > Change Bus");
+            tripNum = ui.getUserIntInput("Enter the trip number");
+            if (!DBInterface.containsTrip(tripNum)) {
+                ui.printError("Given trip number does not exist");
+                continue;
+            }
+            date = ui.getUserStringInput("Enter the offering date");
+            startTime = ui.getUserStringInput("Enter the scheduled start time");
+            newBusID = ui.getUserIntInput("Enter the ID of the new bus");
+            if (!DBInterface.containsBus(newBusID)) {
+                ui.printError("Given bus ID does not exist");
+                continue;
+            }
+            if (DBInterface.updateBus(tripNum, date, startTime, newBusID)) {
+                ui.printMsg("Successfully updated bus");
+            } else {
+                ui.printError("Could not update bus, offering may not exist");
+            }
+            done = true;
+        }
     }
 }

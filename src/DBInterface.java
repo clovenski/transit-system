@@ -1,10 +1,12 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.mongodb.client.model.Filters.*;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
@@ -295,31 +297,26 @@ class DBInterface {
         // delete driver from db according to given driver name
         // also need to set the field in any offerings in any trip that contains
         // this driver; ie. set that field to NULL 
-        
         Document driver = new Document()
         	.append("_id", new Document().append("DriverName", name));
-        
-        try{
+        try {
         	collectionMap.get("drivers").deleteOne(driver);
-        }catch (Exception e){
+        } catch (Exception e){
         	return false;
         }
-        
-        /**
-        boolean driverFound = collectionMap.get("trips").find(
-            and(eq("_id"), elemMatch("offerings", new Document().append("_id", new Document().append("DriverName", name)))));
-            
-            if(driverFound){
-            	try{
-            		collectionMap.get("trips").updateOne(eq("_id", new Document().append("$addToSet", new Document().append("DriverName", null))));
-            		}
-                catch(Exception e){
-                
-            }
+        Document query = new Document()
+            .append("offerings.DriverName", name);
+        Document update = new Document()
+            .append("$unset", new Document().append("offerings.$[matched].DriverName", ""));
+        UpdateOptions filter = new UpdateOptions()
+            .arrayFilters(Arrays.asList(new Document()
+                .append("matched.DriverName", new Document().append("$eq", name))));
+        try {
+            collectionMap.get("trips").updateMany(query, update, filter);
+        } catch (Exception e) {
+            return false;
         }
-        **/
-            	
-        return true; // dummy code
+        return true;
     }
 
     public static boolean deleteBus(int id) {
@@ -360,34 +357,33 @@ class DBInterface {
         // also CASCADE this delete operation to any trip-stop info that contains
         // this trip
         Document trip = new Document()
-        	.append("_id", new Document().append("TripNumber", tripNum));
-        
-        try{
-        	collectionMap.get("trips").deleteOne(trip);
-        }catch (Exception e){
+        	.append("_id.TripNumber", tripNum);
+        try {
+            collectionMap.get("trips").deleteOne(trip);
+            collectionMap.get("tripStopInfo").deleteMany(trip);
+        } catch (Exception e) {
         	return false;
         }
-        
-        return true; // dummy code
+        return true;
     }
 
     public static boolean deleteOffering(int tripNum, String date, String startTime) {
         // delete offering from db with the specified trip number, date and start time
         // note that trip offerings are nested into a field of the trips,
         // so delete the appropriate offering from their "offerings" field
-        Document offering = new Document()
-            .append("_id", new Document()
-            	.append("TripNumber", tripNum)
-                .append("Date", date)
-                .append("ScheduledStartTime", startTime));
-        
-        try{
-        	collectionMap.get("trips").deleteOne(offering);
-        }catch (Exception e){
+        Document trip = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum));
+        Document deletion = new Document()
+            .append("$pull", new Document()
+                .append("offerings", new Document()
+                    .append("_id.Date", date)
+                    .append("_id.ScheduledStartTime", startTime)));
+        try {
+        	collectionMap.get("trips").updateOne(trip, deletion);
+        } catch (Exception e) {
         	return false;
         }
-        
-        return true; // dummy code
+        return true;
     }
 
     public static boolean updateDriver(int tripNum, String date, String startTime, String newDriverName) {
@@ -470,13 +466,5 @@ class DBInterface {
         return collectionMap.get("stops").count(
             eq("_id.StopNumber", stopNum)
         ) > 0;
-    }
-
-    public static long countDrivers() {
-        return collectionMap.get("drivers").count();
-    }
-
-    public static long countBuses() {
-        return collectionMap.get("buses").count();
     }
 }

@@ -93,6 +93,31 @@ class ScheduleEditor {
     }
 
     private void deleteOffering() {
+        if (!DBInterface.tripsExist()) {
+            ui.printError("No trips exist, so no offerings exist");
+            return;
+        }
+
+        boolean done = false;
+        int tripNum;
+        String date, startTime;
+
+        while (!done) {
+            ui.printMenuHeader("> Main Menu > Edit Schedule > Delete Offering");
+            tripNum = ui.getUserIntInput("Enter the trip number");
+            if (!DBInterface.containsTrip(tripNum)) {
+                ui.printError("Given trip number does not exist");
+                continue;
+            }
+            date = ui.getUserStringInput("Enter the offering date");
+            startTime = ui.getUserStringInput("Enter the scheduled start time");
+            if (DBInterface.deleteOffering(tripNum, date, startTime)) {
+                ui.printMsg("Successfully deleted offering");
+            } else {
+                ui.printError("Could not delete offering, may not exist");
+            }
+            done = true;
+        }
     }
 
     private void changeDriver() {
@@ -104,9 +129,6 @@ class ScheduleEditor {
             return;
         } else  if (!DBInterface.busesExist()) {
             ui.printError("No buses exist, cannot possibly update an offering");
-            return;
-        } else if (DBInterface.countDrivers() < 2) {
-            ui.printError("Only one driver exists, cannot possibly update the driver");
             return;
         }
 
@@ -146,9 +168,6 @@ class ScheduleEditor {
             return;
         } else  if (!DBInterface.busesExist()) {
             ui.printError("No buses exist, cannot possibly update an offering");
-            return;
-        } else if (DBInterface.countBuses() < 2) {
-            ui.printError("Only one bus exists, cannot possibly update the bus");
             return;
         }
 

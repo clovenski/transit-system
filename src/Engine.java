@@ -17,18 +17,19 @@ class Engine {
         mainMenuOpts.add("Display schedule of a trip"); // 0
         mainMenuOpts.add("Edit a schedule"); // 1
         mainMenuOpts.add("Display stops of a trip"); // 2
-        mainMenuOpts.add("Display schedule of a driver by date"); // 3
-        mainMenuOpts.add("Add a driver"); // 4
-        mainMenuOpts.add("Add a bus"); // 5
-        mainMenuOpts.add("Add a stop"); // 6
-        mainMenuOpts.add("Add a trip"); // 7
-        mainMenuOpts.add("Add full info to a current trip"); // 8
-        mainMenuOpts.add("Add trip-stop info"); // 9
-        mainMenuOpts.add("Delete a driver"); // 10
-        mainMenuOpts.add("Delete a bus"); // 11
-        mainMenuOpts.add("Delete a stop"); // 12
-        mainMenuOpts.add("Delete a trip"); // 13
-        mainMenuOpts.add("Exit"); // 14
+        mainMenuOpts.add("Display trip-stop info"); // 3
+        mainMenuOpts.add("Display schedule of a driver by date"); // 4
+        mainMenuOpts.add("Add a driver"); // 5
+        mainMenuOpts.add("Add a bus"); // 6
+        mainMenuOpts.add("Add a stop"); // 7
+        mainMenuOpts.add("Add a trip"); // 8
+        mainMenuOpts.add("Add full info to a current trip"); // 9
+        mainMenuOpts.add("Add trip-stop info"); // 10
+        mainMenuOpts.add("Delete a driver"); // 11
+        mainMenuOpts.add("Delete a bus"); // 12
+        mainMenuOpts.add("Delete a stop"); // 13
+        mainMenuOpts.add("Delete a trip"); // 14
+        mainMenuOpts.add("Exit"); // 15
     }
 
     public void run() {
@@ -49,39 +50,42 @@ class Engine {
                 displayStops();
                 break;
             case 3:
-                displayDriverSchedule();
+                displayTripStopFullInfo();
                 break;
             case 4:
-                addDriver();
+                displayDriverSchedule();
                 break;
             case 5:
-                addBus();
+                addDriver();
                 break;
             case 6:
-                addStop();
+                addBus();
                 break;
             case 7:
-                addTrip();
+                addStop();
                 break;
             case 8:
-                addTripInfo();
+                addTrip();
                 break;
             case 9:
-                addTripStopInfo();
+                addTripInfo();
                 break;
             case 10:
-                deleteDriver();
+                addTripStopInfo();
                 break;
             case 11:
-                deleteBus();
+                deleteDriver();
                 break;
             case 12:
-                deleteStop();
+                deleteBus();
                 break;
             case 13:
-                deleteTrip();
+                deleteStop();
                 break;
             case 14:
+                deleteTrip();
+                break;
+            case 15:
                 done = true;
                 break;
             }
@@ -131,21 +135,21 @@ class Engine {
 
     private void displayStops() {
         int tripNum;
-        List<String> tripInfo;
+        List<String> tripStopInfo;
         String border = "";
         StringTokenizer tokenizer;
 
         ui.printMenuHeader("> Main Menu > Display Stops");
         tripNum = ui.getUserIntInput("Enter the trip number");
-        tripInfo = DBInterface.getTripInfo(tripNum);
-        if (tripInfo.size() > 0) {
+        tripStopInfo = DBInterface.getTripStopInfo(tripNum);
+        if (tripStopInfo.size() > 0) {
             ui.println("");
             ui.println(String.format("%-11s | %-15s | %-12s", "Stop Number", "Sequence Number", "Driving Time"));
             for (int i = 0; i < 44; i++) {
                 border += "-";
             }
             ui.println(border);
-            for (String row : tripInfo) {
+            for (String row : tripStopInfo) {
                 tokenizer = new StringTokenizer(row, "\t");
                 ui.println(String.format("%11s | %15s | %12s",
                                          tokenizer.nextToken(),     // stop number
@@ -154,6 +158,41 @@ class Engine {
             }
         } else {
             ui.printMsg("Empty trip info");
+        }
+    }
+
+    private void displayTripStopFullInfo() {
+        int tripNum, stopNum;
+        String date, startTime, border = "";
+        List<String> tripStopFullInfo;
+        StringTokenizer tokenizer;
+
+        ui.printMenuHeader("> Main Menu > Display Trip-Stop Info");
+        tripNum = ui.getUserIntInput("Enter the trip number");
+        date = ui.getUserStringInput("Enter the date");
+        startTime = ui.getUserStringInput("Enter the scheduled start time");
+        stopNum = ui.getUserIntInput("Enter the stop number");
+        tripStopFullInfo = DBInterface.getTripStopFullInfo(tripNum, date, startTime, stopNum);
+        if (tripStopFullInfo.size() > 0) {
+            ui.println("");
+            ui.println(String.format("%-22s | %-17s | %-19s | %-13s | %-14s",
+                                     "Scheduled Arrival Time", "Actual Start Time",
+                                     "Actual Arrival Time", "Passengers In", "Passengers Out"));
+            for (int i = 0; i < 97; i++) {
+                border += "-";
+            }
+            ui.println(border);
+            for (String row : tripStopFullInfo) {
+                tokenizer = new StringTokenizer(row, "\t");
+                ui.println(String.format("%-22s | %-17s | %-19s | %13s | %14s",
+                                         tokenizer.nextToken(),     // sched. arrival time
+                                         tokenizer.nextToken(),     // actual start time
+                                         tokenizer.nextToken(),     // actual arrival time
+                                         tokenizer.nextToken(),     // passengers in
+                                         tokenizer.nextToken()));   // passengers out
+            }
+        } else {
+            ui.printMsg("Empty trip-stop info");
         }
     }
 

@@ -35,6 +35,7 @@ class DBInterface {
         collectionMap.put("drivers", db.getCollection("drivers"));
         collectionMap.put("stops", db.getCollection("stops"));
         collectionMap.put("tripStopInfo", db.getCollection("tripStopInfo"));
+        collectionMap.put("actualTripStopInfo", db.getCollection("actualTripStopInfo"));
     }
 
     @SuppressWarnings("unchecked")
@@ -90,7 +91,7 @@ class DBInterface {
         return schedule;
     }
 
-    public static List<String> getTripInfo(int tripNum) {
+    public static List<String> getTripStopInfo(int tripNum) {
         ArrayList<String> tripInfo = new ArrayList<String>();
         FindIterable<Document> results;
         MongoCursor<Document> it;
@@ -110,6 +111,34 @@ class DBInterface {
             tripInfo.add(row);
         }
         return tripInfo;
+    }
+
+    public static List<String> getTripStopFullInfo(int tripNum, String date, String startTime, int stopNum) {
+        ArrayList<String> tripStopFullInfo = new ArrayList<String>();
+        FindIterable<Document> results;
+        MongoCursor<Document> it;
+        Document currentResult;
+        Document tripStop;
+        String row;
+
+        tripStop = new Document()
+            .append("_id", new Document()
+                .append("TripNumber", tripNum)
+                .append("Date", date)
+                .append("ScheduledStartTime", startTime)
+                .append("StopNumber", stopNum));
+        results = collectionMap.get("actualTripStopInfo").find(tripStop);
+        it = results.iterator();
+        while (it.hasNext()) {
+            currentResult = it.next();
+            row = currentResult.getString("ScheduledArrivalTime") + "\t";
+            row += currentResult.getString("ActualStartTime") + "\t";
+            row += currentResult.getString("ActualArrivalTime") + "\t";
+            row += currentResult.getInteger("NumberOfPassengerIn").toString() + "\t";
+            row += currentResult.getInteger("NumberOfPassengerOut").toString() + "\t";
+            tripStopFullInfo.add(row);
+        }
+        return tripStopFullInfo;
     }
 
     @SuppressWarnings("unchecked")

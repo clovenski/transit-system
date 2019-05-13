@@ -275,12 +275,10 @@ class DBInterface {
             .append("ActualArrivalTime", realArrivalTime)
             .append("NumberOfPassengerIn", numPassengersIn)
             .append("NumberOfPassengerOut", numPassengersOut);
-            
-            boolean alreadyExists = collectionMap.get("trips").find(
-            	and(eq("_id", new Document()
-            	.append("TripNumber", tripNum).append("Date", date)))) != null;
-            	    
-            if(alreadyExists){
+                
+            if(containsOffering(tripNum, date, startTime) &&
+            	containsStop(stopNum)){
+            	
             	collectionMap.get("trips").updateOne(
                     eq("_id", new Document().append("TripNumber", tripNum)),
                     new Document().append("$addToSet", new Document()
@@ -379,13 +377,16 @@ class DBInterface {
         	return false;
         }
         
+       
         Document query = new Document()
             .append("offerings.stopNumber", stopNum);
         Document update = new Document()
             .append("$unset", new Document().append("offerings.$[matched].stopNumber", ""));
         UpdateOptions filter = new UpdateOptions()
-            .arrayFilters(Arrays.asList(new Document()
-                .append("matched.stopNumber", new Document().append("$eq", stopNum))));
+        	.arrayFilters(Arrays.asList(new Document()
+        	.append("matched.stopNumber", new Document().append("$eq", stopNum))));
+        
+        
         try {
             collectionMap.get("trips").updateMany(query, update, filter);
         } catch (Exception e) {

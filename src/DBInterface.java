@@ -312,8 +312,7 @@ class DBInterface {
     public static boolean deleteDriver(String name) {
         // delete driver from db according to given driver name
         // also need to set the field in any offerings in any trip that contains
-        // this driver; ie. set that field to NULL 
-        //test gitHub
+        // this driver; ie. set that field to NULL
         Document driver = new Document()
         	.append("_id", new Document().append("DriverName", name));
         try {
@@ -508,6 +507,16 @@ class DBInterface {
     public static boolean containsStop(int stopNum) {
         return collectionMap.get("stops").count(
             eq("_id.StopNumber", stopNum)
+        ) > 0;
+    }
+
+    public static boolean containsOffering(int tripNum, String date, String startTime) {
+        return collectionMap.get("trips").count(
+            and(eq("_id.TripNumber", tripNum),
+                elemMatch("offerings", new Document()
+                    .append("_id", new Document()
+                        .append("Date", date)
+                        .append("ScheduledStartTime", startTime))))
         ) > 0;
     }
 }

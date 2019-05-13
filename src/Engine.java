@@ -336,7 +336,9 @@ class Engine {
             numPassengersIn = ui.getUserIntInput("Enter the total no. of passengers in");
             numPassengersOut = ui.getUserIntInput("Enter the total no. of passengers out");
     
-            if (DBInterface.addFullTripInfo(tripNum, date, startTime, stopNum, arrivalTime, realStartTime, realArrivalTime,numPassengersIn, numPassengersOut)){
+            if (DBInterface.addFullTripStopInfo(tripNum, date, startTime, stopNum, arrivalTime,
+                                                realStartTime, realArrivalTime,numPassengersIn,
+                                                numPassengersOut)) {
                 ui.printMsg("Trip Info successfully added");
             } else {
                 ui.printError("Could not add trip-stop info, may already exist");
@@ -346,6 +348,14 @@ class Engine {
     }
 
     private void addTripStopInfo() {
+        if (!DBInterface.tripsExist()) {
+            ui.printError("No trips exist, cannot possibly add a trip-stop");
+            return;
+        } else if (!DBInterface.stopsExist()) {
+            ui.printError("No stops exist, cannot possible add a trip-stop");
+            return;
+        }
+
         boolean done = false;
         int tripNum, stopNum, seqNum, drivingTime;
 

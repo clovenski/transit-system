@@ -281,7 +281,7 @@ class DBInterface {
         }
     }
 
-    public static boolean addFullTripInfo(int tripNum,
+    public static boolean addFullTripStopInfo(int tripNum,
                                           String date,
                                           String startTime,
                                           int stopNum,

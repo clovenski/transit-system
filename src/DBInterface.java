@@ -1,11 +1,14 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.mongodb.client.model.Filters.*;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
@@ -87,6 +90,88 @@ class DBInterface {
         return schedule;
     }
 
+    public static List<String> getTripInfo(int tripNum) {
+        ArrayList<String> tripInfo = new ArrayList<String>();
+        FindIterable<Document> results;
+        MongoCursor<Document> it;
+        Document currentResult;
+        Document trip;
+        String row;
+
+        trip = new Document()
+            .append("_id.TripNumber", tripNum);
+        results = collectionMap.get("tripStopInfo").find(trip);
+        it = results.iterator();
+        while (it.hasNext()) {
+            currentResult = it.next();
+            row = ((Document)currentResult.get("_id")).getInteger("StopNumber").toString() + "\t";
+            row += currentResult.getInteger("SequenceNumber").toString() + "\t";
+            row += currentResult.getInteger("DrivingTime").toString();
+            tripInfo.add(row);
+        }
+        return tripInfo;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<String> getDriverSchedule(String driverName, String date) {
+        ArrayList<String> schedule, condition1, condition2;
+        ArrayList<Bson> pipeline, conditions;
+        ArrayList<Document> offerings;
+        Bson stage1, stage2;
+        AggregateIterable<Document> results;
+        MongoCursor<Document> it;
+        Document currentResult;
+        String row, tripNumStr, startLocStr, destinationStr;
+
+        schedule = new ArrayList<String>();
+        pipeline = new ArrayList<Bson>();
+        conditions = new ArrayList<Bson>();
+        condition1 = new ArrayList<String>();
+        condition2 = new ArrayList<String>();
+        condition1.add("$$offering._id.Date");
+        condition1.add(date);
+        condition2.add("$$offering.DriverName");
+        condition2.add(driverName);
+        conditions.add(new Document().append("$eq", condition1));
+        conditions.add(new Document().append("$eq", condition2));
+        stage1 = new Document()
+            .append("$match", new Document()
+                .append("offerings.DriverName", driverName)
+                .append("offerings._id.Date", date)
+            );
+        stage2 = new Document()
+            .append("$addFields", new Document()
+                .append("offerings", new Document()
+                    .append("$filter", new Document()
+                        .append("input", "$offerings")
+                        .append("as", "offering")
+                        .append("cond", new Document()
+                            .append("$and", conditions)
+                        )
+                    )
+                )
+            );
+        pipeline.add(stage1);
+        pipeline.add(stage2);
+        results = collectionMap.get("trips").aggregate(pipeline);
+        it = results.iterator();
+        while (it.hasNext()) {
+            currentResult = it.next();
+            tripNumStr = ((Document)currentResult.get("_id")).getInteger("TripNumber").toString();
+            startLocStr = currentResult.getString("StartLocationName");
+            destinationStr = currentResult.getString("DestinationName");
+            offerings = (ArrayList<Document>) currentResult.get("offerings");
+            for (Document offering : offerings) {
+                row = tripNumStr + "\t" + startLocStr + "\t" + destinationStr + "\t";
+                row += ((Document)offering.get("_id")).getString("ScheduledStartTime") + "\t";
+                row += offering.getString("ScheduledArrivalTime") + "\t";
+                row += offering.getInteger("BusID").toString();
+                schedule.add(row);
+            }
+        }
+        return schedule;
+    }
+
     public static boolean addDriver(String name, String phoneNumber) {
         Document driver = new Document()
             .append("_id", new Document().append("DriverName", name))
@@ -147,8 +232,10 @@ class DBInterface {
             .append("BusID", busID);
         boolean alreadyExists = collectionMap.get("trips").find(
             and(eq("_id", new Document().append("TripNumber", tripNum)),
-                elemMatch("offerings", new Document().append("_id", new Document().append("Date", date).append("ScheduledStartTime", startTime)))
-            )
+                elemMatch("offerings", new Document()
+                    .append("_id", new Document()
+                        .append("Date", date)
+                        .append("ScheduledStartTime", startTime))))
         ).first() != null;
         if (alreadyExists) {
             return false;
@@ -181,16 +268,32 @@ class DBInterface {
         	.append("_id", new Document()
                 .append("TripNumber", tripNum)
                 .append("Date", date))
-                .append("ScheduledStartTime", startTime)
-           		.append("StopNumber", stopNum)
-            	.append("ScheduledArrivalTime", arrivalTime)
-            	.append("ActualStartTime", realStartTime)
-            	.append("ActualArrivalTime", realArrivalTime)
-            	.append("NumberOfPassengerIn", numPassengersIn)
-            	.append("NumberOfPassengerOut", numPassengersOut);
-            	
-            	
-        return true; // dummy code
+            .append("ScheduledStartTime", startTime)
+            .append("StopNumber", stopNum)
+            .append("ScheduledArrivalTime", arrivalTime)
+            .append("ActualStartTime", realStartTime)
+            .append("ActualArrivalTime", realArrivalTime)
+            .append("NumberOfPassengerIn", numPassengersIn)
+            .append("NumberOfPassengerOut", numPassengersOut);
+            
+            boolean alreadyExists = collectionMap.get("trips").find(
+            	and(eq("_id", new Document()
+            	.append("TripNumber", tripNum).append("Date", date)))) != null;
+            	    
+            if(alreadyExists){
+            	collectionMap.get("trips").updateOne(
+                    eq("_id", new Document().append("TripNumber", tripNum)),
+                    new Document().append("$addToSet", new Document()
+                        .append("TripInfo", tripInfo)));
+            }
+            else{
+            	try {
+            		collectionMap.get("trips").insertOne(tripInfo);
+        		} catch (Exception e) {
+            		return false;
+        		}
+        	}
+        return true;
     }
 
     public static boolean addTripStopInfo(int tripNum, int stopNum, int seqNum, int drivingTime) {
@@ -213,28 +316,24 @@ class DBInterface {
         //test gitHub
         Document driver = new Document()
         	.append("_id", new Document().append("DriverName", name));
-        
-        try{
+        try {
         	collectionMap.get("drivers").deleteOne(driver);
-        }catch (Exception e){
+        } catch (Exception e){
         	return false;
         }
-        
-        /**
-        boolean driverFound = collectionMap.get("trips").find(
-            and(eq("_id"), elemMatch("offerings", new Document().append("_id", new Document().append("DriverName", name)))));
-            
-            if(driverFound){
-            	try{
-            		collectionMap.get("trips").updateOne(eq("_id", new Document().append("$addToSet", new Document().append("DriverName", null))));
-            		}
-                catch(Exception e){
-                
-            }
+        Document query = new Document()
+            .append("offerings.DriverName", name);
+        Document update = new Document()
+            .append("$unset", new Document().append("offerings.$[matched].DriverName", ""));
+        UpdateOptions filter = new UpdateOptions()
+            .arrayFilters(Arrays.asList(new Document()
+                .append("matched.DriverName", new Document().append("$eq", name))));
+        try {
+            collectionMap.get("trips").updateMany(query, update, filter);
+        } catch (Exception e) {
+            return false;
         }
-        **/
-            	
-        return true; // dummy code
+        return true;
     }
 
     public static boolean deleteBus(int id) {
@@ -251,7 +350,20 @@ class DBInterface {
         	return false;
         }
         
-        return true; // dummy code
+       Document query = new Document()
+            .append("offerings.BusID", id);
+        Document update = new Document()
+            .append("$unset", new Document().append("offerings.$[matched].BusID", ""));
+        UpdateOptions filter = new UpdateOptions()
+            .arrayFilters(Arrays.asList(new Document()
+                .append("matched.BusID", new Document().append("$eq", id))));
+        try {
+            collectionMap.get("trips").updateMany(query, update, filter);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    
     }
 
     public static boolean deleteStop(int stopNum) {
@@ -267,6 +379,19 @@ class DBInterface {
         }catch (Exception e){
         	return false;
         }
+        
+        Document query = new Document()
+            .append("offerings.stopNumber", stopNum);
+        Document update = new Document()
+            .append("$unset", new Document().append("offerings.$[matched].stopNumber", ""));
+        UpdateOptions filter = new UpdateOptions()
+            .arrayFilters(Arrays.asList(new Document()
+                .append("matched.stopNumber", new Document().append("$eq", stopNum))));
+        try {
+            collectionMap.get("trips").updateMany(query, update, filter);
+        } catch (Exception e) {
+            return false;
+        }
         return true; // dummy code
     }
 
@@ -275,46 +400,75 @@ class DBInterface {
         // also CASCADE this delete operation to any trip-stop info that contains
         // this trip
         Document trip = new Document()
-        	.append("_id", new Document().append("TripNumber", tripNum));
-        
-        try{
-        	collectionMap.get("trips").deleteOne(trip);
-        }catch (Exception e){
+        	.append("_id.TripNumber", tripNum);
+        try {
+            collectionMap.get("trips").deleteOne(trip);
+            collectionMap.get("tripStopInfo").deleteMany(trip);
+        } catch (Exception e) {
         	return false;
         }
-        
-        return true; // dummy code
+        return true;
     }
 
     public static boolean deleteOffering(int tripNum, String date, String startTime) {
         // delete offering from db with the specified trip number, date and start time
         // note that trip offerings are nested into a field of the trips,
         // so delete the appropriate offering from their "offerings" field
-        Document offering = new Document()
-            .append("_id", new Document()
-            	.append("TripNumber", tripNum)
-                .append("Date", date)
-                .append("ScheduledStartTime", startTime));
-        
-        try{
-        	collectionMap.get("trips").deleteOne(offering);
-        }catch (Exception e){
+        Document trip = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum));
+        Document deletion = new Document()
+            .append("$pull", new Document()
+                .append("offerings", new Document()
+                    .append("_id.Date", date)
+                    .append("_id.ScheduledStartTime", startTime)));
+        try {
+        	collectionMap.get("trips").updateOne(trip, deletion);
+        } catch (Exception e) {
         	return false;
         }
-        
-        return true; // dummy code
+        return true;
     }
 
     public static boolean updateDriver(int tripNum, String date, String startTime, String newDriverName) {
         // update the appropriate offering's "DriverName" field to newDriverName
         // return true if successfully updated, false otherwise
-        return true; // dummy code
+        Document query = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum))
+            .append("offerings", new Document()
+                .append("$elemMatch", new Document()
+                    .append("_id", new Document()
+                        .append("Date", date)
+                        .append("ScheduledStartTime", startTime))));
+        Document update = new Document()
+            .append("$set", new Document()
+                .append("offerings.$.DriverName", newDriverName));
+        try {
+            collectionMap.get("trips").updateOne(query, update);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean updateBus(int tripNum, String date, String startTime, int newBusID) {
         // update the appropriate offering's "BusID" field to newBusID
         // return true if successfully updated, false otherwise
-        return true; // dummy code
+        Document query = new Document()
+            .append("_id", new Document().append("TripNumber", tripNum))
+            .append("offerings", new Document()
+                .append("$elemMatch", new Document()
+                    .append("_id", new Document()
+                        .append("Date", date)
+                        .append("ScheduledStartTime", startTime))));
+        Document update = new Document()
+            .append("$set", new Document()
+                .append("offerings.$.BusID", newBusID));
+        try {
+            collectionMap.get("trips").updateOne(query, update);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean tripsExist() {

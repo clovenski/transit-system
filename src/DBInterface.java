@@ -421,6 +421,7 @@ class DBInterface {
         try {
             collectionMap.get("trips").deleteOne(trip);
             collectionMap.get("tripStopInfo").deleteMany(trip);
+            collectionMap.get("actualTripStopInfo").deleteMany(trip);
         } catch (Exception e) {
         	return false;
         }
@@ -442,6 +443,16 @@ class DBInterface {
         	collectionMap.get("trips").updateOne(trip, deletion);
         } catch (Exception e) {
         	return false;
+        }
+
+        Document tripStop = new Document()
+            .append("_id.TripNumber", tripNum)
+            .append("_id.Date", date)
+            .append("_id.ScheduledStartTime", startTime);
+        try {
+            collectionMap.get("actualTripStopInfo").deleteMany(tripStop);
+        } catch (Exception e) {
+            return false;
         }
         return true;
     }

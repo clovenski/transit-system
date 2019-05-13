@@ -23,7 +23,7 @@ class Engine {
         mainMenuOpts.add("Add a bus"); // 6
         mainMenuOpts.add("Add a stop"); // 7
         mainMenuOpts.add("Add a trip"); // 8
-        mainMenuOpts.add("Add full info to a current trip"); // 9
+        mainMenuOpts.add("Add full info to a current trip-stop"); // 9
         mainMenuOpts.add("Add trip-stop info"); // 10
         mainMenuOpts.add("Delete a driver"); // 11
         mainMenuOpts.add("Delete a bus"); // 12
@@ -68,7 +68,7 @@ class Engine {
                 addTrip();
                 break;
             case 9:
-                addTripInfo();
+                addTripStopFullInfo();
                 break;
             case 10:
                 addTripStopInfo();
@@ -287,12 +287,20 @@ class Engine {
         }
     }
 
-    private void addTripInfo() {
+    private void addTripStopFullInfo() {
         // print menu header: > Main Menu > Add Trip Info
         // print a warning that any existing info will be overwritten
         // prompt user for input for all the needed attributes
         // call DBInterface.addFullTripInfo(...) with the necessary args
         // output success or failure depending on returned value
+        if (!DBInterface.tripsExist()) {
+            ui.printError("No trips exist, cannot possibly add full trip-stop info");
+            return;
+        } else if (!DBInterface.stopsExist()) {
+            ui.printError("No stops exist, cannot possible add full trip-stop-info");
+            return;
+        }
+
         int tripNum;
         String date;
         String startTime;
@@ -302,24 +310,39 @@ class Engine {
         String realArrivalTime;
         int numPassengersIn;
         int numPassengersOut;
-        ui.printMenuHeader("> Main Menu > Add Trip Info");
-        tripNum = ui.getUserIntInput("Enter the trip number");
-        date = ui.getUserStringInput("Enter the trip date");
-        startTime = ui.getUserStringInput("Enter the trip start time");
-        stopNum = ui.getUserIntInput("Enter the number of stops on the trip");
-        arrivalTime = ui.getUserStringInput("Enter the arrival time of the trip");
-        realStartTime = ui.getUserStringInput("Enter the real start time of the trip");
-        realArrivalTime = ui.getUserStringInput("Enter the real arrival time of the trip");
-        numPassengersIn = ui.getUserIntInput("Enter the total no. of passengers in");
-        numPassengersOut = ui.getUserIntInput("Enter the total no. of passengers out");
-        
-        if (DBInterface.addFullTripInfo(tripNum, date, startTime, stopNum, arrivalTime, realStartTime, realArrivalTime,numPassengersIn, numPassengersOut)){
-            ui.printMsg("Trip Info successfully added");
-        } else {
-            ui.printError("Could not add trip info, may already exist");
+        boolean done = false;
+
+        while (!done) {
+            ui.printMenuHeader("> Main Menu > Add Trip Info");
+            tripNum = ui.getUserIntInput("Enter the trip number");
+            if (!DBInterface.containsTrip(tripNum)) {
+                ui.printError("Given trip number does not exist");
+                continue;
+            }
+            date = ui.getUserStringInput("Enter the trip date");
+            startTime = ui.getUserStringInput("Enter the scheduled start time");
+            if (!DBInterface.containsOffering(tripNum, date, startTime)) {
+                ui.printError("Given offering does not exist");
+                continue;
+            }
+            stopNum = ui.getUserIntInput("Enter the stop number");
+            if (!DBInterface.containsStop(stopNum)) {
+                ui.printError("Given stop number does not exist");
+                continue;
+            }
+            arrivalTime = ui.getUserStringInput("Enter the scheduled arrival time of the trip");
+            realStartTime = ui.getUserStringInput("Enter the actual start time of the trip");
+            realArrivalTime = ui.getUserStringInput("Enter the actual arrival time of the trip");
+            numPassengersIn = ui.getUserIntInput("Enter the total no. of passengers in");
+            numPassengersOut = ui.getUserIntInput("Enter the total no. of passengers out");
+    
+            if (DBInterface.addFullTripInfo(tripNum, date, startTime, stopNum, arrivalTime, realStartTime, realArrivalTime,numPassengersIn, numPassengersOut)){
+                ui.printMsg("Trip Info successfully added");
+            } else {
+                ui.printError("Could not add trip-stop info, may already exist");
+            }
+            done = true;
         }
-        
-      
     }
 
     private void addTripStopInfo() {

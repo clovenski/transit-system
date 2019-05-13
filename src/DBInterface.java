@@ -292,34 +292,22 @@ class DBInterface {
                                           int numPassengersOut) {
         // return true if trip info was updated properly OR added if doesn't exist
         // false otherwise
-        
-        Document tripInfo = new Document()
+        Document tripStopInfo = new Document()
         	.append("_id", new Document()
                 .append("TripNumber", tripNum)
-                .append("Date", date))
-            .append("ScheduledStartTime", startTime)
-            .append("StopNumber", stopNum)
+                .append("Date", date)
+                .append("ScheduledStartTime", startTime)
+                .append("StopNumber", stopNum))
             .append("ScheduledArrivalTime", arrivalTime)
             .append("ActualStartTime", realStartTime)
             .append("ActualArrivalTime", realArrivalTime)
             .append("NumberOfPassengerIn", numPassengersIn)
             .append("NumberOfPassengerOut", numPassengersOut);
-                
-            if(containsOffering(tripNum, date, startTime) &&
-            	containsStop(stopNum)){
-            	
-            	collectionMap.get("trips").updateOne(
-                    eq("_id", new Document().append("TripNumber", tripNum)),
-                    new Document().append("$addToSet", new Document()
-                        .append("TripInfo", tripInfo)));
-            }
-            else{
-            	try {
-            		collectionMap.get("trips").insertOne(tripInfo);
-        		} catch (Exception e) {
-            		return false;
-        		}
-        	}
+        try {
+            collectionMap.get("actualTripStopInfo").insertOne(tripStopInfo);
+        } catch (Exception e) {
+            return false;
+        }
         return true;
     }
 

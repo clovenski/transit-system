@@ -47,7 +47,8 @@ class DBInterface {
         AggregateIterable<Document> results;
         MongoCursor<Document> it;
         Document currentResult;
-        String row;
+        String row, driverName;
+        Integer busID;
 
         schedule = new ArrayList<String>();
         pipeline = new ArrayList<Bson>();
@@ -83,8 +84,10 @@ class DBInterface {
                 row = date + "\t" + startLocName + "\t" + destName + "\t";
                 row += ((Document)offering.get("_id")).getString("ScheduledStartTime") + "\t";
                 row += offering.getString("ScheduledArrivalTime") + "\t";
-                row += offering.getString("DriverName") + "\t";
-                row += offering.getInteger("BusID").toString();
+                driverName = offering.getString("DriverName");
+                row += (driverName != null ? driverName : "NULL") + "\t";
+                busID = offering.getInteger("BusID");
+                row += busID != null ? busID.toString() : "NULL";
                 schedule.add(row);
             }
         }
@@ -151,6 +154,7 @@ class DBInterface {
         MongoCursor<Document> it;
         Document currentResult;
         String row, tripNumStr, startLocStr, destinationStr;
+        Integer busID;
 
         schedule = new ArrayList<String>();
         pipeline = new ArrayList<Bson>();
@@ -194,7 +198,8 @@ class DBInterface {
                 row = tripNumStr + "\t" + startLocStr + "\t" + destinationStr + "\t";
                 row += ((Document)offering.get("_id")).getString("ScheduledStartTime") + "\t";
                 row += offering.getString("ScheduledArrivalTime") + "\t";
-                row += offering.getInteger("BusID").toString();
+                busID = offering.getInteger("BusID");
+                row += busID != null ? busID.toString() : "NULL";
                 schedule.add(row);
             }
         }

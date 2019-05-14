@@ -297,7 +297,13 @@ class Engine {
             ui.printError("No trips exist, cannot possibly add full trip-stop info");
             return;
         } else if (!DBInterface.stopsExist()) {
-            ui.printError("No stops exist, cannot possible add full trip-stop-info");
+            ui.printError("No stops exist, cannot possibly add full trip-stop info");
+            return;
+        } else if (!DBInterface.offeringsExist()) {
+            ui.printError("No offerings exist, cannot possibly add full trip-stop info");
+            return;
+        } else if (!DBInterface.tripStopsExist()) {
+            ui.printError("No trip-stops exist, cannot possibly add full trip-stop info");
             return;
         }
 
@@ -321,16 +327,19 @@ class Engine {
             }
             date = ui.getUserStringInput("Enter the trip date");
             startTime = ui.getUserStringInput("Enter the scheduled start time");
-            if (!DBInterface.containsOffering(tripNum, date, startTime)) {
-                ui.printError("Given offering does not exist");
-                continue;
-            }
             stopNum = ui.getUserIntInput("Enter the stop number");
             if (!DBInterface.containsStop(stopNum)) {
                 ui.printError("Given stop number does not exist");
                 continue;
+            } else if (!DBInterface.containsTripStop(tripNum, stopNum)) {
+                ui.printError("Given trip-stop does not exist");
+                continue;
             }
             arrivalTime = ui.getUserStringInput("Enter the scheduled arrival time of the trip");
+            if (!DBInterface.containsOffering(tripNum, date, startTime, arrivalTime)) {
+                ui.printError("Given offering does not exist");
+                continue;
+            }
             realStartTime = ui.getUserStringInput("Enter the actual start time of the trip");
             realArrivalTime = ui.getUserStringInput("Enter the actual arrival time of the trip");
             numPassengersIn = ui.getUserIntInput("Enter the total no. of passengers in");

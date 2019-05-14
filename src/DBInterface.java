@@ -515,6 +515,16 @@ class DBInterface {
         return collectionMap.get("stops").count() > 0;
     }
 
+    public static boolean offeringsExist() {
+        return collectionMap.get("trips").count(new Document()
+            .append("offerings", new Document().append("$exists", true))
+        ) > 0;
+    }
+
+    public static boolean tripStopsExist() {
+        return collectionMap.get("tripStopInfo").count() > 0;
+    }
+
     public static boolean containsTrip(int tripNum) {
         return collectionMap.get("trips").count(
             eq("_id.TripNumber", tripNum)
@@ -539,13 +549,21 @@ class DBInterface {
         ) > 0;
     }
 
-    public static boolean containsOffering(int tripNum, String date, String startTime) {
+    public static boolean containsOffering(int tripNum, String date, String startTime, String arrivalTime) {
         return collectionMap.get("trips").count(
             and(eq("_id.TripNumber", tripNum),
                 elemMatch("offerings", new Document()
                     .append("_id", new Document()
                         .append("Date", date)
-                        .append("ScheduledStartTime", startTime))))
+                        .append("ScheduledStartTime", startTime))
+                    .append("ScheduledArrivalTime", arrivalTime)))
+        ) > 0;
+    }
+
+    public static boolean containsTripStop(int tripNum, int stopNum) {
+        return collectionMap.get("tripStopInfo").count(new Document()
+            .append("_id.TripNumber", tripNum)
+            .append("_id.StopNumber", stopNum)
         ) > 0;
     }
 }

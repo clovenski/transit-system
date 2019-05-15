@@ -307,15 +307,8 @@ class Engine {
             return;
         }
 
-        int tripNum;
-        String date;
-        String startTime;
-        int stopNum;
-        String arrivalTime;
-        String realStartTime;
-        String realArrivalTime;
-        int numPassengersIn;
-        int numPassengersOut;
+        int tripNum, stopNum, numPassengersIn, numPassengersOut;
+        String date, startTime, arrivalTime, realStartTime, realArrivalTime;
         boolean done = false;
 
         while (!done) {

@@ -337,7 +337,7 @@ class DBInterface {
         	.append("_id", new Document().append("DriverName", name));
         try {
         	collectionMap.get("drivers").deleteOne(driver);
-        } catch (Exception e){
+        } catch (Exception e) {
         	return false;
         }
         Document query = new Document()
@@ -359,17 +359,14 @@ class DBInterface {
         // delete bus from db according to given bus ID
         // also need to set the field in any offerings in any trip that contains
         // this bus; ie. set that field to NULL
-        
-         Document bus = new Document()
+        Document bus = new Document()
         	.append("_id", new Document().append("BusID", id));
-        
-        try{
+        try {
         	collectionMap.get("buses").deleteOne(bus);
-        }catch (Exception e){
+        } catch (Exception e) {
         	return false;
         }
-        
-       Document query = new Document()
+        Document query = new Document()
             .append("offerings.BusID", id);
         Document update = new Document()
             .append("$unset", new Document().append("offerings.$[matched].BusID", ""));
@@ -382,7 +379,6 @@ class DBInterface {
             return false;
         }
         return true;
-    
     }
 
     public static boolean deleteStop(int stopNum) {
@@ -391,30 +387,15 @@ class DBInterface {
         // offerings in any trip that contains this stop, also CASCADE
         // the delete onto any trip-stop info that contains this stop
         Document stop = new Document()
-        	.append("_id", new Document().append("StopNumber", stopNum));
-        
-        try{
-        	collectionMap.get("stops").deleteOne(stop);
-        }catch (Exception e){
+        	.append("_id.StopNumber", stopNum);
+        try {
+            collectionMap.get("stops").deleteOne(stop);
+            collectionMap.get("tripStopInfo").deleteMany(stop);
+            collectionMap.get("actualTripStopInfo").deleteMany(stop);
+        } catch (Exception e) {
         	return false;
         }
-        
-       
-        Document query = new Document()
-            .append("offerings.stopNumber", stopNum);
-        Document update = new Document()
-            .append("$unset", new Document().append("offerings.$[matched].stopNumber", ""));
-        UpdateOptions filter = new UpdateOptions()
-        	.arrayFilters(Arrays.asList(new Document()
-        	.append("matched.stopNumber", new Document().append("$eq", stopNum))));
-        
-        
-        try {
-            collectionMap.get("trips").updateMany(query, update, filter);
-        } catch (Exception e) {
-            return false;
-        }
-        return true; // dummy code
+        return true;
     }
 
     public static boolean deleteTrip(int tripNum) {
